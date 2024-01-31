@@ -90,12 +90,11 @@ public class WhisperKit {
             try await prewarmModels()
         }
 
-        // If load is not passed, load based on whether a model is passed
-        // Otherwise we assume the user will call loadModels() themselves
-        if load ?? (modelFolder != nil) {
+        if let load, load == true {
             Logging.info("Loading models...")
             try await loadModels()
         }
+        
     }
 
     // MARK: - Model Loading
@@ -200,6 +199,7 @@ public class WhisperKit {
 
         try [logmelUrl, encoderUrl, decoderUrl].forEach {
             if !FileManager.default.fileExists(atPath: $0.path) {
+                print(logmelUrl, encoderUrl, decoderUrl)
                 throw WhisperError.modelsUnavailable()
             }
         }
