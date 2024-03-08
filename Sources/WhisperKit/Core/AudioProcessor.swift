@@ -539,8 +539,8 @@ public extension AudioProcessor {
          let bufferSize = AVAudioFrameCount(minBufferLength) // 100ms - 400ms supported
         converterNode.installTap(onBus: 0, bufferSize: bufferSize, format: converterNode.outputFormat(forBus: 0)) { (buffer: AVAudioPCMBuffer!, time: AVAudioTime!) -> Void in
          guard let self = self else { return }
-            var buffer = buffer
-            if !buffer?.format.sampleRate.isEqual(to: Double(WhisperKit.sampleRate)) {
+            var buffer = buffer!
+            if !buffer.format.sampleRate.isEqual(to: Double(WhisperKit.sampleRate)) {
                 do {
                     buffer = try Self.resampleBuffer(buffer, with: converter)
                 } catch {
