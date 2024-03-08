@@ -490,17 +490,35 @@ public extension AudioProcessor {
     
     func setupEngine(inputDeviceID: DeviceID? = nil) throws -> AVAudioEngine {
         let audioEngine = AVAudioEngine()
-        let inputNode = audioEngine.inputNode
+        //let inputNode = audioEngine.inputNode
         
-        #if os(macOS)
-        if let inputDeviceID = inputDeviceID {
-            assignAudioInput(inputNode: inputNode, inputDeviceID: inputDeviceID)
-        }
-        #endif
+        // #if os(macOS)
+        // if let inputDeviceID = inputDeviceID {
+        //     assignAudioInput(inputNode: inputNode, inputDeviceID: inputDeviceID)
+        // }
+        // #endif
         
-        let inputFormat = inputNode.inputFormat(forBus: 0)
+        // let inputFormat = inputNode.inputFormat(forBus: 0)
 
-        // Desired format (16,000 Hz, 1 channel)
+        // // Desired format (16,000 Hz, 1 channel)
+        // guard let desiredFormat = AVAudioFormat(
+        //     commonFormat: .pcmFormatFloat32,
+        //     sampleRate: Double(WhisperKit.sampleRate),
+        //     channels: AVAudioChannelCount(1),
+        //     interleaved: false
+        // ) else {
+        //     throw WhisperError.audioProcessingFailed("Failed to create desired format")
+        // }
+
+        // guard let converter = AVAudioConverter(from: inputFormat, to: desiredFormat) else {
+        //     throw WhisperError.audioProcessingFailed("Failed to create audio converter")
+        // }
+
+
+
+
+        let inputNode = audioEngine.inputNode
+        let inputFormat = inputNode.inputFormat(forBus: 0)
         guard let desiredFormat = AVAudioFormat(
             commonFormat: .pcmFormatFloat32,
             sampleRate: Double(WhisperKit.sampleRate),
@@ -510,14 +528,17 @@ public extension AudioProcessor {
             throw WhisperError.audioProcessingFailed("Failed to create desired format")
         }
 
-        guard let converter = AVAudioConverter(from: inputFormat, to: desiredFormat) else {
-            throw WhisperError.audioProcessingFailed("Failed to create audio converter")
-        }
 
+        
+        let converterNode = AVAudioMixerNode()
+        let sinkNode = AVAudioMixerNode()
+        
+        audioEngine.attach(converterNode)
+        audioEngine.attach(sinkNode)
 
-        let bufferSize = AVAudioFrameCount(minBufferLength) // 100ms - 400ms supported
-        inputNode.installTap(onBus: 0, bufferSize: bufferSize, format: inputFormat) { [weak self] (buffer: AVAudioPCMBuffer, _: AVAudioTime) in
-            guard let self = self else { return }
+         let bufferSize = AVAudioFrameCount(minBufferLength) // 100ms - 400ms supported
+        converterNode.installTap(onBus: 0, bufferSize: bufferSize, format: converterNode.outputFormat(forBus: 0)) { (buffer: AVAudioPCMBuffer!, time: AVAudioTime!) -> Void in
+         guard let self = self else { return }
             var buffer = buffer
             if !buffer.format.sampleRate.isEqual(to: Double(WhisperKit.sampleRate)) {
                 do {
@@ -531,8 +552,35 @@ public extension AudioProcessor {
             let newBufferArray = Self.convertBufferToArray(buffer: buffer)
             self.processBuffer(newBufferArray)
         }
-
+        
+        audioEngine.connect(inputNode, to: converterNode, format: inputFormat)
+        audioEngine.connect(converterNode, to: sinkNode, format: desiredFormat)
         audioEngine.prepare()
+
+
+
+
+        
+
+
+        // let bufferSize = AVAudioFrameCount(minBufferLength) // 100ms - 400ms supported
+        // inputNode.installTap(onBus: 0, bufferSize: bufferSize, format: inputFormat) { [weak self] (buffer: AVAudioPCMBuffer, _: AVAudioTime) in
+        //     guard let self = self else { return }
+        //     var buffer = buffer
+        //     if !buffer.format.sampleRate.isEqual(to: Double(WhisperKit.sampleRate)) {
+        //         do {
+        //             buffer = try Self.resampleBuffer(buffer, with: converter)
+        //         } catch {
+        //             Logging.error("Failed to resample buffer: \(error)")
+        //             return
+        //         }
+        //     }
+
+        //     let newBufferArray = Self.convertBufferToArray(buffer: buffer)
+        //     self.processBuffer(newBufferArray)
+        // }
+
+        //audioEngine.prepare()
         try audioEngine.start()
 
         return audioEngine
