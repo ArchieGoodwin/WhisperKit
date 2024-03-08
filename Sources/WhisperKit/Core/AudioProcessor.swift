@@ -510,9 +510,7 @@ public extension AudioProcessor {
         //     throw WhisperError.audioProcessingFailed("Failed to create desired format")
         // }
 
-        // guard let converter = AVAudioConverter(from: inputFormat, to: desiredFormat) else {
-        //     throw WhisperError.audioProcessingFailed("Failed to create audio converter")
-        // }
+       
 
 
 
@@ -528,7 +526,9 @@ public extension AudioProcessor {
             throw WhisperError.audioProcessingFailed("Failed to create desired format")
         }
 
-
+         guard let converter = AVAudioConverter(from: inputFormat, to: desiredFormat) else {
+            throw WhisperError.audioProcessingFailed("Failed to create audio converter")
+        }
         
         let converterNode = AVAudioMixerNode()
         let sinkNode = AVAudioMixerNode()
@@ -540,7 +540,7 @@ public extension AudioProcessor {
         converterNode.installTap(onBus: 0, bufferSize: bufferSize, format: converterNode.outputFormat(forBus: 0)) { (buffer: AVAudioPCMBuffer!, time: AVAudioTime!) -> Void in
          guard let self = self else { return }
             var buffer = buffer
-            if !buffer.format.sampleRate.isEqual(to: Double(WhisperKit.sampleRate)) {
+            if !buffer?.format.sampleRate.isEqual(to: Double(WhisperKit.sampleRate)) {
                 do {
                     buffer = try Self.resampleBuffer(buffer, with: converter)
                 } catch {
