@@ -537,7 +537,7 @@ public extension AudioProcessor {
         audioEngine.attach(sinkNode)
 
          let bufferSize = AVAudioFrameCount(minBufferLength) // 100ms - 400ms supported
-        converterNode.installTap(onBus: 0, bufferSize: bufferSize, format: converterNode.outputFormat(forBus: 0)) { (buffer: AVAudioPCMBuffer!, time: AVAudioTime!) -> Void in
+        inputNode.installTap(onBus: 0, bufferSize: bufferSize, format: converterNode.outputFormat(forBus: 0)) { (buffer: AVAudioPCMBuffer!, time: AVAudioTime!) -> Void in
             var buffer = buffer!
             if !buffer.format.sampleRate.isEqual(to: Double(WhisperKit.sampleRate)) {
                 do {
