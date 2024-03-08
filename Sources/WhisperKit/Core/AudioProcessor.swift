@@ -498,7 +498,7 @@ public extension AudioProcessor {
         }
         #endif
         
-        let inputFormat = inputNode.outputFormat(forBus: 0)
+        let inputFormat = inputNode.inputFormat(forBus: 0)
 
         // Desired format (16,000 Hz, 1 channel)
         guard let desiredFormat = AVAudioFormat(
@@ -513,6 +513,7 @@ public extension AudioProcessor {
         guard let converter = AVAudioConverter(from: inputFormat, to: desiredFormat) else {
             throw WhisperError.audioProcessingFailed("Failed to create audio converter")
         }
+
 
         let bufferSize = AVAudioFrameCount(minBufferLength) // 100ms - 400ms supported
         inputNode.installTap(onBus: 0, bufferSize: bufferSize, format: inputFormat) { [weak self] (buffer: AVAudioPCMBuffer, _: AVAudioTime) in
